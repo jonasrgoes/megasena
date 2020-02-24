@@ -13,8 +13,9 @@ from http.cookiejar import CookieJar
 print('\33c')
 
 # Grab content from URL
+WINNERS_ONLY = True
+LAST_CONTESTS = [3, 5, 10, 25, 50, 100, 250, 500, 1000, 1500, 2000, 2500, 3000]
 BASE_DIR = pathlib.Path(__file__).parent.absolute()
-JSON_FILE = BASE_DIR / 'megasena.json'
 ZIP_FILE = BASE_DIR / 'megasena.zip'
 HTML_FILE = BASE_DIR / 'd_mega.htm'
 
@@ -39,7 +40,7 @@ with zipfile.ZipFile(str(ZIP_FILE), 'r') as zip_ref:
     zip_ref.extractall(str(BASE_DIR))
 
 # Dezenas da Mega Sena
-dezenas = {
+dozens = {
     1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0,
     11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0,
     21: 0, 22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0, 29: 0, 30: 0,
@@ -62,31 +63,45 @@ html = element.get_attribute('outerHTML')
 soup = BeautifulSoup(html, 'html.parser')
 table = soup.find(name='table')
 
-# Data Frame - Pandas
-df_full = pd.read_html(str(table))[0].tail(25)
-df = df_full[['1ª Dezena', '2ª Dezena', '3ª Dezena',
-              '4ª Dezena', '5ª Dezena', '6ª Dezena', 'Ganhadores_Sena', 'Cidade']]
-df.columns = ['_1', '_2', '_3', '_4', '_5', '_6', 'ganhadores', 'cidade']
 
-js = df.to_dict('records')
+def calc_ocurrencies(contests):
+    if WINNERS_ONLY:
+        json_file = BASE_DIR / str('megasena_winners_' + str(contests) + '.json')
+    else:
+        json_file = BASE_DIR / str('megasena_' + str(contests) + '.json')
 
-for k in js:
-    dezenas[k['_1']] = dezenas[k['_1']] + 1
-    dezenas[k['_2']] = dezenas[k['_2']] + 1
-    dezenas[k['_3']] = dezenas[k['_3']] + 1
-    dezenas[k['_4']] = dezenas[k['_4']] + 1
-    dezenas[k['_5']] = dezenas[k['_5']] + 1
-    dezenas[k['_6']] = dezenas[k['_6']] + 1
+    # Data Frame - Pandas
+    df_full = pd.read_html(str(table))[0].tail(contests)
+    df = df_full[['1ª Dezena', '2ª Dezena', '3ª Dezena',
+                  '4ª Dezena', '5ª Dezena', '6ª Dezena', 'Ganhadores_Sena', 'Cidade']]
+    df.columns = ['_1', '_2', '_3', '_4', '_5', '_6', 'ganhadores', 'cidade']
 
-sorted = {k: v for k, v in sorted(
-    dezenas.items(), key=lambda item: item[1], reverse=True)}
+    js = df.to_dict('records')
 
+    for k in js:
+        if WINNERS_ONLY:
+            if k['ganhadores'] <= 0:
+                continue
+        dozens[k['_1']] = dozens[k['_1']] + 1
+        dozens[k['_2']] = dozens[k['_2']] + 1
+        dozens[k['_3']] = dozens[k['_3']] + 1
+        dozens[k['_4']] = dozens[k['_4']] + 1
+        dozens[k['_5']] = dozens[k['_5']] + 1
+        dozens[k['_6']] = dozens[k['_6']] + 1
+
+    ordered_dozens = {k: v for k, v in sorted(
+        dozens.items(), key=lambda item: item[1], reverse=True)}
+
+    print('Number of contests: ' + str(contests))
+    print(ordered_dozens)
+
+    # Dump and Save to JSON file (Converter e salvar em um arquivo JSON)
+    with open(str(json_file), 'w', encoding='utf-8') as jp:
+        js = json.dumps(ordered_dozens, indent=4)
+        jp.write(js)
+
+
+for contests in LAST_CONTESTS:
+    calc_ocurrencies(contests)
 
 driver.quit()
-
-print(sorted)
-
-# Dump and Save to JSON file (Converter e salvar em um arquivo JSON)
-with open(str(JSON_FILE), 'w', encoding='utf-8') as jp:
-    js = json.dumps(sorted, indent=4)
-    jp.write(js)
