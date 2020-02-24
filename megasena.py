@@ -9,13 +9,16 @@ import urllib.request
 import sys
 import pathlib
 from http.cookiejar import CookieJar
+from itertools import combinations
+from typing import OrderedDict
 
 print('\33c')
 
 # Grab content from URL
 WINNERS_ONLY = True
+MAX_DOZENS = 20
 # LAST_CONTESTS = [3, 5, 10, 25, 50, 100, 250, 500, 1000, 1500, 2000, 2500, 3000]
-LAST_CONTESTS = [50, 100]
+LAST_CONTESTS = [250, 500]
 BASE_DIR = pathlib.Path(__file__).parent.absolute()
 ZIP_FILE = BASE_DIR / 'megasena.zip'
 HTML_FILE = BASE_DIR / 'd_mega.htm'
@@ -67,15 +70,38 @@ def calc_ocurrencies(contests):
     if WINNERS_ONLY:
         json_file = BASE_DIR / \
             str('megasena_winners_' + str(contests) + '.json')
+        results_file = BASE_DIR / \
+            str('results_winners_' + str(contests) + '.json')
     else:
         json_file = BASE_DIR / str('megasena_' + str(contests) + '.json')
+        results_file = BASE_DIR / str('results_' + str(contests) + '.json')
 
     # Dezenas da Mega Sena
     dozens = {}
     for i in range(1, 61):
         dozens[i] = 0
 
-    # Data Frame - Pandas
+    # Números Sorteados
+    results = []
+    df_full = pd.read_html(str(table))[0].tail(contests)
+    df = df_full[['1ª Dezena', '2ª Dezena', '3ª Dezena',
+                  '4ª Dezena', '5ª Dezena', '6ª Dezena', 'Ganhadores_Sena', 'Cidade']]
+    df.columns = ['_1', '_2', '_3', '_4', '_5', '_6', 'ganhadores', 'cidade']
+    js = df.to_dict('records')
+
+    for k in js:
+        results_list = [int(k['_1']), int(k['_2']), int(
+            k['_3']), int(k['_4']), int(k['_5']), int(k['_6'])]
+        results_list.sort()
+        results.append(results_list)
+
+    results = [list(i) for i in set(map(tuple, results))]
+
+    with open(str(results_file), 'w', encoding='utf-8') as jp:
+        js = json.dumps(results, indent=4)
+        jp.write(js)
+
+    # Ranking: Quantas vezes cada número foi sorteado
     df_full = pd.read_html(str(table))[0].tail(contests)
     df = df_full[['1ª Dezena', '2ª Dezena', '3ª Dezena',
                   '4ª Dezena', '5ª Dezena', '6ª Dezena', 'Ganhadores_Sena', 'Cidade']]
@@ -85,20 +111,18 @@ def calc_ocurrencies(contests):
 
     for k in js:
         if WINNERS_ONLY:
-            if k['ganhadores'] <= 0:
+            if int(k['ganhadores']) <= 0:
                 continue
-        dozens[k['_1']] = dozens[k['_1']] + 1
-        dozens[k['_2']] = dozens[k['_2']] + 1
-        dozens[k['_3']] = dozens[k['_3']] + 1
-        dozens[k['_4']] = dozens[k['_4']] + 1
-        dozens[k['_5']] = dozens[k['_5']] + 1
-        dozens[k['_6']] = dozens[k['_6']] + 1
+
+        dozens[int(k['_1'])] = dozens[int(k['_1'])] + 1
+        dozens[int(k['_2'])] = dozens[int(k['_2'])] + 1
+        dozens[int(k['_3'])] = dozens[int(k['_3'])] + 1
+        dozens[int(k['_4'])] = dozens[int(k['_4'])] + 1
+        dozens[int(k['_5'])] = dozens[int(k['_5'])] + 1
+        dozens[int(k['_6'])] = dozens[int(k['_6'])] + 1
 
     ordered_dozens = {k: v for k, v in sorted(
         dozens.items(), key=lambda item: item[1], reverse=True)}
-
-    print('Number of contests: ' + str(contests))
-    print(ordered_dozens)
 
     # Dump and Save to JSON file (Converter e salvar em um arquivo JSON)
     with open(str(json_file), 'w', encoding='utf-8') as jp:
@@ -111,6 +135,57 @@ def ranking_dozens():
         calc_ocurrencies(contests)
 
 
-zip_download()
+def write_bets():
+    for contests in LAST_CONTESTS:
+        if WINNERS_ONLY:
+            json_file = BASE_DIR / \
+                str('megasena_winners_' + str(contests) + '.json')
+            results_file = BASE_DIR / \
+                str('results_winners_' + str(contests) + '.json')
+            bets_file = BASE_DIR / \
+                str('bets_winners_' + str(contests) + '.json')
+        else:
+            json_file = BASE_DIR / str('megasena_' + str(contests) + '.json')
+            results_file = BASE_DIR / str('results_' + str(contests) + '.json')
+            bets_file = BASE_DIR / str('bets_' + str(contests) + '.json')
+
+        counter = 0
+        bets_list = []
+        bets_result = []
+        selected_dozens = []
+
+        with open(json_file) as json_file_read:
+            data = json.load(json_file_read)
+            for p in data.keys():
+                counter += 1
+                if counter > MAX_DOZENS:
+                    break
+                selected_dozens.append(int(p))
+
+        selected_dozens.sort()
+
+        comb = combinations(selected_dozens, 6)
+
+        for bet in comb:
+            bets_list.append(bet)
+
+        bets_combinations = [list(i) for i in set(map(tuple, bets_list))]
+
+        with open(results_file) as json_result_file_read:
+            data = json.load(json_result_file_read)
+            for result in data:
+                for bet in bets_combinations:
+                    intersection = set(result) & set(bet)
+                    bets_result.append([bet, len(intersection)])
+
+        bets_result.sort(reverse = True)
+        
+        with open(str(bets_file), 'w', encoding='utf-8') as jp:
+            js = json.dumps(bets_result, indent=4)
+            jp.write(js)
+
+
+# zip_download()
 table = html_parse()
 ranking_dozens()
+write_bets()
