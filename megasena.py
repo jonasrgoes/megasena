@@ -7,13 +7,16 @@ import json
 import zipfile
 import urllib.request
 import sys
+import pathlib
 from http.cookiejar import CookieJar
 
+print('\33c')
+
 # Grab content from URL
-BASE_DIR = '/Users/jonasgoes/Downloads'
-JSON_FILE = BASE_DIR + '/megasena.json'
-ZIP_FILE = BASE_DIR + '/megasena.zip'
-HTML_FILE = 'file://' + BASE_DIR + '/d_mega.htm'
+BASE_DIR = pathlib.Path(__file__).parent.absolute()
+JSON_FILE = BASE_DIR / 'megasena.json'
+ZIP_FILE = BASE_DIR / 'megasena.zip'
+HTML_FILE = BASE_DIR / 'd_mega.htm'
 
 ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
 
@@ -25,15 +28,15 @@ try:
         urllib.request.HTTPCookieProcessor(cj))
     response = opener.open(req)
     raw_response = response.read()
-    with open(ZIP_FILE, 'wb') as jp:
+    with open(str(ZIP_FILE), 'wb') as jp:
         jp.write(raw_response)
     response.close()
 except urllib.request.HTTPError as inst:
     output = format(inst)
     print(output)
 
-with zipfile.ZipFile(ZIP_FILE, 'r') as zip_ref:
-    zip_ref.extractall(BASE_DIR)
+with zipfile.ZipFile(str(ZIP_FILE), 'r') as zip_ref:
+    zip_ref.extractall(str(BASE_DIR))
 
 # Dezenas da Mega Sena
 dezenas = {
@@ -49,7 +52,7 @@ option = Options()
 option.headless = True
 driver = webdriver.Firefox(options=option)
 
-driver.get(HTML_FILE)
+driver.get('file://' + str(HTML_FILE))
 # driver.implicitly_wait(5)
 
 element = driver.find_element_by_xpath("//table")
@@ -78,11 +81,12 @@ for k in js:
 sorted = {k: v for k, v in sorted(
     dezenas.items(), key=lambda item: item[1], reverse=True)}
 
-print(sorted)
 
 driver.quit()
 
+print(sorted)
+
 # Dump and Save to JSON file (Converter e salvar em um arquivo JSON)
-with open(JSON_FILE, 'w', encoding='utf-8') as jp:
+with open(str(JSON_FILE), 'w', encoding='utf-8') as jp:
     js = json.dumps(sorted, indent=4)
     jp.write(js)
