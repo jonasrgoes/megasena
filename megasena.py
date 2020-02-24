@@ -75,8 +75,6 @@ def calc_ocurrencies(contests):
     for i in range(1, 61):
         dozens[i] = 0
 
-    table = html_parse()
-
     # Data Frame - Pandas
     df_full = pd.read_html(str(table))[0].tail(contests)
     df = df_full[['1ª Dezena', '2ª Dezena', '3ª Dezena',
@@ -114,4 +112,5 @@ def ranking_dozens():
 
 
 zip_download()
+table = html_parse()
 ranking_dozens()
