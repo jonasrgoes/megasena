@@ -180,7 +180,6 @@ def write_bets():
                 str('bets_sena_' + str(contests) + '.json')
 
         counter = 0
-        bets_list = []
         bets_quadra = []
         bets_quina = []
         bets_sena = []
@@ -196,12 +195,9 @@ def write_bets():
 
         selected_dozens.sort()
 
-        comb = combinations(selected_dozens, BETS_DOZENS_COUNT)
+        combination_list = combinations(selected_dozens, BETS_DOZENS_COUNT)
 
-        for bet in comb:
-            bets_list.append(bet)
-
-        bets_combinations = [list(i) for i in set(map(tuple, bets_list))]
+        bets_combinations = list(map(sorted, combination_list))
 
         with open(results_file) as json_result_file_read:
             data = json.load(json_result_file_read, parse_int=int)
@@ -214,10 +210,6 @@ def write_bets():
                         bets_quina.append(bet)
                     elif len(intersection) == 4:
                         bets_quadra.append(bet)
-
-        bets_sena.sort(reverse=True)
-        bets_quina.sort(reverse=True)
-        bets_quadra.sort(reverse=True)
 
         with open(str(bets_sena_file), 'w', encoding='utf-8') as jp:
             js = json.dumps(bets_sena, indent=4)
