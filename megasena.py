@@ -162,22 +162,22 @@ def write_bets():
             results_file = JSON_BASE_DIR / \
                 str('results_winners_' + str(contests) + '.json')
             bets_quadra_file = JSON_BASE_DIR / \
-                str('bets_winners_quadra_' + str(contests) + '.json')
+                str('bets_winners_quadra_' + str(contests) + '.txt')
             bets_quina_file = JSON_BASE_DIR / \
-                str('bets_winners_quina_' + str(contests) + '.json')
+                str('bets_winners_quina_' + str(contests) + '.txt')
             bets_sena_file = JSON_BASE_DIR / \
-                str('bets_winners_sena_' + str(contests) + '.json')
+                str('bets_winners_sena_' + str(contests) + '.txt')
         else:
             json_file = JSON_BASE_DIR / \
                 str('megasena_' + str(contests) + '.json')
             results_file = JSON_BASE_DIR / \
                 str('results_' + str(contests) + '.json')
             bets_quadra_file = JSON_BASE_DIR / \
-                str('bets_quadra_' + str(contests) + '.json')
+                str('bets_quadra_' + str(contests) + '.txt')
             bets_quina_file = JSON_BASE_DIR / \
-                str('bets_quina_' + str(contests) + '.json')
+                str('bets_quina_' + str(contests) + '.txt')
             bets_sena_file = JSON_BASE_DIR / \
-                str('bets_sena_' + str(contests) + '.json')
+                str('bets_sena_' + str(contests) + '.txt')
 
         counter = 0
         bets_quadra = []
@@ -212,16 +212,16 @@ def write_bets():
                         bets_quadra.append(bet)
 
         with open(str(bets_sena_file), 'w', encoding='utf-8') as jp:
-            js = json.dumps(bets_sena, indent=4)
-            jp.write(js)
+            for bet in bets_sena:
+                jp.write("%s\n" % ' '.join(str(x).zfill(2) for x in bet))
 
         with open(str(bets_quina_file), 'w', encoding='utf-8') as jp:
-            js = json.dumps(bets_quina, indent=4)
-            jp.write(js)
+            for bet in bets_quina:
+                jp.write("%s\n" % ' '.join(str(x).zfill(2) for x in bet))
 
         with open(str(bets_quadra_file), 'w', encoding='utf-8') as jp:
-            js = json.dumps(bets_quadra, indent=4)
-            jp.write(js)
+            for bet in bets_quadra:
+                jp.write("%s\n" % ' '.join(str(x).zfill(2) for x in bet))
 
 
 # zip_download()
