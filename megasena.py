@@ -19,9 +19,9 @@ print('\33c')
 
 # Settings
 WINNERS_ONLY = False
-MAX_DOZENS = 11
+MAX_DOZENS = 7
 BETS_DOZENS_COUNT = 6
-LAST_CONTESTS = [25]
+LAST_CONTESTS = [1000]
 
 # Megasena Data Source
 ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
@@ -204,16 +204,16 @@ def write_bets():
         bets_combinations = [list(i) for i in set(map(tuple, bets_list))]
 
         with open(results_file) as json_result_file_read:
-            data = json.load(json_result_file_read)
+            data = json.load(json_result_file_read, parse_int=int)
             for result in data:
                 for bet in bets_combinations:
                     intersection = set(result) & set(bet)
-                    if len(intersection) == 4:
-                        bets_quadra.append([bet, len(intersection)])
+                    if len(intersection) == 6:
+                        bets_sena.append(bet)
                     elif len(intersection) == 5:
-                        bets_quina.append([bet, len(intersection)])
-                    elif len(intersection) == 6:
-                        bets_sena.append([bet, len(intersection)])
+                        bets_quina.append(bet)
+                    elif len(intersection) == 4:
+                        bets_quadra.append(bet)
 
         bets_quadra.sort(reverse=True)
         bets_quina.sort(reverse=True)
