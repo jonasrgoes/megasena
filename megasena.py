@@ -19,9 +19,9 @@ print('\33c')
 
 # Settings
 WINNERS_ONLY = False
-MAX_DOZENS = 7
+DOZENS_MOST_SORTED = 16
 BETS_DOZENS_COUNT = 6
-LAST_CONTESTS = [1000]
+LAST_CONTESTS = [60]
 
 # Megasena Data Source
 ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
@@ -190,7 +190,7 @@ def write_bets():
             data = json.load(json_file_read)
             for p in data.keys():
                 counter += 1
-                if counter > MAX_DOZENS:
+                if counter > DOZENS_MOST_SORTED:
                     break
                 selected_dozens.append(int(p))
 
@@ -215,20 +215,20 @@ def write_bets():
                     elif len(intersection) == 4:
                         bets_quadra.append(bet)
 
-        bets_quadra.sort(reverse=True)
-        bets_quina.sort(reverse=True)
         bets_sena.sort(reverse=True)
+        bets_quina.sort(reverse=True)
+        bets_quadra.sort(reverse=True)
 
-        with open(str(bets_quadra_file), 'w', encoding='utf-8') as jp:
-            js = json.dumps(bets_quadra, indent=4)
+        with open(str(bets_sena_file), 'w', encoding='utf-8') as jp:
+            js = json.dumps(bets_sena, indent=4)
             jp.write(js)
 
         with open(str(bets_quina_file), 'w', encoding='utf-8') as jp:
             js = json.dumps(bets_quina, indent=4)
             jp.write(js)
 
-        with open(str(bets_sena_file), 'w', encoding='utf-8') as jp:
-            js = json.dumps(bets_sena, indent=4)
+        with open(str(bets_quadra_file), 'w', encoding='utf-8') as jp:
+            js = json.dumps(bets_quadra, indent=4)
             jp.write(js)
 
 
