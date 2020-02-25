@@ -16,9 +16,8 @@ print('\33c')
 
 # Grab content from URL
 WINNERS_ONLY = True
-MAX_DOZENS = 20
-# LAST_CONTESTS = [3, 5, 10, 25, 50, 100, 250, 500, 1000, 1500, 2000, 2500, 3000]
-LAST_CONTESTS = [250, 500]
+MAX_DOZENS = 10
+LAST_CONTESTS = [25,50,100]
 BASE_DIR = pathlib.Path(__file__).parent.absolute()
 ZIP_FILE = BASE_DIR / 'megasena.zip'
 HTML_FILE = BASE_DIR / 'd_mega.htm'
@@ -142,16 +141,27 @@ def write_bets():
                 str('megasena_winners_' + str(contests) + '.json')
             results_file = BASE_DIR / \
                 str('results_winners_' + str(contests) + '.json')
-            bets_file = BASE_DIR / \
-                str('bets_winners_' + str(contests) + '.json')
+            bets_quadra_file = BASE_DIR / \
+                str('bets_winners_quadra_' + str(contests) + '.json')
+            bets_quina_file = BASE_DIR / \
+                str('bets_winners_quina_' + str(contests) + '.json')
+            bets_sena_file = BASE_DIR / \
+                str('bets_winners_sena_' + str(contests) + '.json')
         else:
             json_file = BASE_DIR / str('megasena_' + str(contests) + '.json')
             results_file = BASE_DIR / str('results_' + str(contests) + '.json')
-            bets_file = BASE_DIR / str('bets_' + str(contests) + '.json')
+            bets_quadra_file = BASE_DIR / \
+                str('bets_quadra_' + str(contests) + '.json')
+            bets_quina_file = BASE_DIR / \
+                str('bets_quina_' + str(contests) + '.json')
+            bets_sena_file = BASE_DIR / \
+                str('bets_sena_' + str(contests) + '.json')
 
         counter = 0
         bets_list = []
-        bets_result = []
+        bets_quadra = []
+        bets_quina = []
+        bets_sena = []
         selected_dozens = []
 
         with open(json_file) as json_file_read:
@@ -176,16 +186,31 @@ def write_bets():
             for result in data:
                 for bet in bets_combinations:
                     intersection = set(result) & set(bet)
-                    bets_result.append([bet, len(intersection)])
+                    if len(intersection) == 4:
+                        bets_quadra.append([bet, len(intersection)])
+                    elif len(intersection) == 5:
+                        bets_quina.append([bet, len(intersection)])
+                    elif len(intersection) == 6:
+                        bets_sena.append([bet, len(intersection)])
 
-        bets_result.sort(reverse = True)
-        
-        with open(str(bets_file), 'w', encoding='utf-8') as jp:
-            js = json.dumps(bets_result, indent=4)
+        bets_quadra.sort(reverse=True)
+        bets_quina.sort(reverse=True)
+        bets_sena.sort(reverse=True)
+
+        with open(str(bets_quadra_file), 'w', encoding='utf-8') as jp:
+            js = json.dumps(bets_quadra, indent=4)
+            jp.write(js)
+
+        with open(str(bets_quina_file), 'w', encoding='utf-8') as jp:
+            js = json.dumps(bets_quina, indent=4)
+            jp.write(js)
+
+        with open(str(bets_sena_file), 'w', encoding='utf-8') as jp:
+            js = json.dumps(bets_sena, indent=4)
             jp.write(js)
 
 
-# zip_download()
+zip_download()
 table = html_parse()
 ranking_dozens()
 write_bets()
