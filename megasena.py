@@ -1,26 +1,27 @@
 import os
+import sys
+import shutil
+import pathlib
+import json
+import zipfile
 import requests
+import urllib.request
 import pandas as pd
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-import json
-import zipfile
-import urllib.request
-import sys
-import pathlib
 from http.cookiejar import CookieJar
 from itertools import combinations
 from typing import OrderedDict
-import shutil
+
 
 print('\33c')
 
 # Settings
 WINNERS_ONLY = False
-MAX_DOZENS = 8
+MAX_DOZENS = 11
 BETS_DOZENS_COUNT = 6
-LAST_CONTESTS = [25, 50, 100]
+LAST_CONTESTS = [25]
 
 # Megasena Data Source
 ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
