@@ -1,3 +1,4 @@
+import os
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -11,18 +12,35 @@ import pathlib
 from http.cookiejar import CookieJar
 from itertools import combinations
 from typing import OrderedDict
+import shutil
 
 print('\33c')
 
-# Grab content from URL
-WINNERS_ONLY = True
-MAX_DOZENS = 10
-LAST_CONTESTS = [25,50,100]
+# Settings
+WINNERS_ONLY = False
+MAX_DOZENS = 8
+BETS_DOZENS_COUNT = 6
+LAST_CONTESTS = [25, 50, 100]
+
+# Megasena Data Source
+ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
+
+# Paths Constants
 BASE_DIR = pathlib.Path(__file__).parent.absolute()
+JSON_BASE_DIR = pathlib.Path(__file__).parent.absolute() / 'json'
 ZIP_FILE = BASE_DIR / 'megasena.zip'
 HTML_FILE = BASE_DIR / 'd_mega.htm'
 
-ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
+try:
+    os.stat(JSON_BASE_DIR)
+    shutil.rmtree(JSON_BASE_DIR)
+except:
+    os.mkdir(JSON_BASE_DIR)
+
+try:
+    os.stat(JSON_BASE_DIR)
+except:
+    os.mkdir(JSON_BASE_DIR)
 
 
 def zip_download():
@@ -67,13 +85,14 @@ def html_parse():
 
 def calc_ocurrencies(contests):
     if WINNERS_ONLY:
-        json_file = BASE_DIR / \
+        json_file = JSON_BASE_DIR / \
             str('megasena_winners_' + str(contests) + '.json')
-        results_file = BASE_DIR / \
+        results_file = JSON_BASE_DIR / \
             str('results_winners_' + str(contests) + '.json')
     else:
-        json_file = BASE_DIR / str('megasena_' + str(contests) + '.json')
-        results_file = BASE_DIR / str('results_' + str(contests) + '.json')
+        json_file = JSON_BASE_DIR / str('megasena_' + str(contests) + '.json')
+        results_file = JSON_BASE_DIR / \
+            str('results_' + str(contests) + '.json')
 
     # Dezenas da Mega Sena
     dozens = {}
@@ -137,24 +156,26 @@ def ranking_dozens():
 def write_bets():
     for contests in LAST_CONTESTS:
         if WINNERS_ONLY:
-            json_file = BASE_DIR / \
+            json_file = JSON_BASE_DIR / \
                 str('megasena_winners_' + str(contests) + '.json')
-            results_file = BASE_DIR / \
+            results_file = JSON_BASE_DIR / \
                 str('results_winners_' + str(contests) + '.json')
-            bets_quadra_file = BASE_DIR / \
+            bets_quadra_file = JSON_BASE_DIR / \
                 str('bets_winners_quadra_' + str(contests) + '.json')
-            bets_quina_file = BASE_DIR / \
+            bets_quina_file = JSON_BASE_DIR / \
                 str('bets_winners_quina_' + str(contests) + '.json')
-            bets_sena_file = BASE_DIR / \
+            bets_sena_file = JSON_BASE_DIR / \
                 str('bets_winners_sena_' + str(contests) + '.json')
         else:
-            json_file = BASE_DIR / str('megasena_' + str(contests) + '.json')
-            results_file = BASE_DIR / str('results_' + str(contests) + '.json')
-            bets_quadra_file = BASE_DIR / \
+            json_file = JSON_BASE_DIR / \
+                str('megasena_' + str(contests) + '.json')
+            results_file = JSON_BASE_DIR / \
+                str('results_' + str(contests) + '.json')
+            bets_quadra_file = JSON_BASE_DIR / \
                 str('bets_quadra_' + str(contests) + '.json')
-            bets_quina_file = BASE_DIR / \
+            bets_quina_file = JSON_BASE_DIR / \
                 str('bets_quina_' + str(contests) + '.json')
-            bets_sena_file = BASE_DIR / \
+            bets_sena_file = JSON_BASE_DIR / \
                 str('bets_sena_' + str(contests) + '.json')
 
         counter = 0
@@ -174,7 +195,7 @@ def write_bets():
 
         selected_dozens.sort()
 
-        comb = combinations(selected_dozens, 6)
+        comb = combinations(selected_dozens, BETS_DOZENS_COUNT)
 
         for bet in comb:
             bets_list.append(bet)
@@ -210,7 +231,7 @@ def write_bets():
             jp.write(js)
 
 
-zip_download()
+# zip_download()
 table = html_parse()
 ranking_dozens()
 write_bets()
