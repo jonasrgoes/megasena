@@ -15,13 +15,13 @@ from itertools import combinations
 from typing import OrderedDict
 
 
-print('\33c')
-
 # Settings
-WINNERS_ONLY = False
-DOZENS_MOST_SORTED = 16
+MIN_DOZEN = 18
+MAX_DOZEN = 60
+WINNERS_ONLY = True
+DOZENS_MOST_SORTED = 18
 BETS_DOZENS_COUNT = 6
-LAST_CONTESTS = [60]
+LAST_CONTESTS = [1000]
 
 # Megasena Data Source
 ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
@@ -31,6 +31,8 @@ BASE_DIR = pathlib.Path(__file__).parent.absolute()
 JSON_BASE_DIR = pathlib.Path(__file__).parent.absolute() / 'json'
 ZIP_FILE = BASE_DIR / 'megasena.zip'
 HTML_FILE = BASE_DIR / 'd_mega.htm'
+
+print('\33c')
 
 try:
     os.stat(JSON_BASE_DIR)
@@ -133,12 +135,18 @@ def calc_ocurrencies(contests):
             if int(k['ganhadores']) <= 0:
                 continue
 
-        dozens[int(k['_1'])] = dozens[int(k['_1'])] + 1
-        dozens[int(k['_2'])] = dozens[int(k['_2'])] + 1
-        dozens[int(k['_3'])] = dozens[int(k['_3'])] + 1
-        dozens[int(k['_4'])] = dozens[int(k['_4'])] + 1
-        dozens[int(k['_5'])] = dozens[int(k['_5'])] + 1
-        dozens[int(k['_6'])] = dozens[int(k['_6'])] + 1
+        if MIN_DOZEN <= int(k['_1']) <= MAX_DOZEN:
+            dozens[int(k['_1'])] += 1
+        if MIN_DOZEN <= int(k['_2']) <= MAX_DOZEN:
+            dozens[int(k['_2'])] += 1
+        if MIN_DOZEN <= int(k['_3']) <= MAX_DOZEN:
+            dozens[int(k['_3'])] += 1
+        if MIN_DOZEN <= int(k['_4']) <= MAX_DOZEN:
+            dozens[int(k['_4'])] += 1
+        if MIN_DOZEN <= int(k['_5']) <= MAX_DOZEN:
+            dozens[int(k['_5'])] += 1
+        if MIN_DOZEN <= int(k['_6']) <= MAX_DOZEN:
+            dozens[int(k['_6'])] += 1
 
     ordered_dozens = {k: v for k, v in sorted(
         dozens.items(), key=lambda item: item[1], reverse=True)}
@@ -224,7 +232,45 @@ def write_bets():
                 jp.write("%s\n" % ' '.join(str(x).zfill(2) for x in bet))
 
 
+def results():
+    if WINNERS_ONLY:
+        results_file = JSON_BASE_DIR / str('results_winners.txt')
+    else:
+        results_file = JSON_BASE_DIR / str('results.txt')
+
+    # Números Sorteados
+    results = []
+    results_sorted = []
+    df_full = pd.read_html(str(table))[0]
+    df = df_full[['1ª Dezena', '2ª Dezena', '3ª Dezena',
+                  '4ª Dezena', '5ª Dezena', '6ª Dezena', 'Ganhadores_Sena']]
+    df.columns = ['_1', '_2', '_3', '_4', '_5', '_6', 'ganhadores']
+    js = df.to_dict('records')
+
+    for k in js:
+        if WINNERS_ONLY:
+            if int(k['ganhadores']) <= 0:
+                continue
+
+        result_list = [k['_1'], k['_2'], k['_3'], k['_4'], k['_5'], k['_6']]
+        result_list.sort()
+
+        result_line = ''.join(str(x).zfill(2) for x in result_list)
+
+        results.append(result_line)
+
+    results.sort()
+
+    results = list(dict.fromkeys(results))
+
+    with open(str(results_file), 'w', encoding='utf-8') as jp:
+        for line in results:
+            jp.write("%s\n" % ' '.join(str(line[i:i+2])
+                                       for i in range(0, len(line), 2)))
+
+
 # zip_download()
 table = html_parse()
 ranking_dozens()
 write_bets()
+results()
