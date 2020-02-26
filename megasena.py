@@ -16,12 +16,12 @@ from typing import OrderedDict
 
 
 # Settings
-MIN_DOZEN = 1
-MAX_DOZEN = 60
+MIN_DOZEN = 20
+MAX_DOZEN = 50
 WINNERS_ONLY = False
-DOZENS_MOST_SORTED = 16
+DOZENS_MOST_SORTED = 7
 BETS_DOZENS_COUNT = 6
-LAST_CONTESTS = [100]
+LAST_CONTESTS = [500]
 
 # Megasena Data Source
 ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
@@ -103,41 +103,36 @@ def calc_ocurrencies(contests):
         dozens[i] = 0
 
     # Números Sorteados
-    df_full = pd.read_html(str(table))[0].tail(contests)
+    df_full = pd.read_html(str(table))[0]
     df = df_full[['1ª Dezena', '2ª Dezena', '3ª Dezena',
                   '4ª Dezena', '5ª Dezena', '6ª Dezena', 'Ganhadores_Sena', 'Cidade']]
     df.columns = ['_1', '_2', '_3', '_4', '_5', '_6', 'ganhadores', 'cidade']
-    js = df.to_dict('records')
+    df = df.drop_duplicates(keep='first', subset=['_1', '_2', '_3', '_4', '_5', '_6'])
+    js = df.tail(contests).to_dict('records')
 
     results = []
     for k in js:
         if WINNERS_ONLY:
-            if int(k['ganhadores']) <= 0:
+            if k['ganhadores'] == 0:
                 continue
 
         results_list = [int(k['_1']), int(k['_2']), int(
             k['_3']), int(k['_4']), int(k['_5']), int(k['_6'])]
         results_list.sort()
+        results.append(results_list)
 
-        for result in results:
-            if len(set(result) & set(results_list)) == 6:
-                break
-
-        else:
-            results.append(results_list)
-
-            if MIN_DOZEN <= int(k['_1']) <= MAX_DOZEN:
-                dozens[int(k['_1'])] += 1
-            if MIN_DOZEN <= int(k['_2']) <= MAX_DOZEN:
-                dozens[int(k['_2'])] += 1
-            if MIN_DOZEN <= int(k['_3']) <= MAX_DOZEN:
-                dozens[int(k['_3'])] += 1
-            if MIN_DOZEN <= int(k['_4']) <= MAX_DOZEN:
-                dozens[int(k['_4'])] += 1
-            if MIN_DOZEN <= int(k['_5']) <= MAX_DOZEN:
-                dozens[int(k['_5'])] += 1
-            if MIN_DOZEN <= int(k['_6']) <= MAX_DOZEN:
-                dozens[int(k['_6'])] += 1
+        if MIN_DOZEN <= int(k['_1']) <= MAX_DOZEN:
+            dozens[int(k['_1'])] += 1
+        if MIN_DOZEN <= int(k['_2']) <= MAX_DOZEN:
+            dozens[int(k['_2'])] += 1
+        if MIN_DOZEN <= int(k['_3']) <= MAX_DOZEN:
+            dozens[int(k['_3'])] += 1
+        if MIN_DOZEN <= int(k['_4']) <= MAX_DOZEN:
+            dozens[int(k['_4'])] += 1
+        if MIN_DOZEN <= int(k['_5']) <= MAX_DOZEN:
+            dozens[int(k['_5'])] += 1
+        if MIN_DOZEN <= int(k['_6']) <= MAX_DOZEN:
+            dozens[int(k['_6'])] += 1
 
     with open(str(results_file), 'w', encoding='utf-8') as jp:
         js = json.dumps(results, indent=4)
