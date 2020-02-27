@@ -16,12 +16,12 @@ from typing import OrderedDict
 
 
 # Settings
-MIN_DOZEN = 20
-MAX_DOZEN = 50
+MIN_DOZEN = 1
+MAX_DOZEN = 60
 WINNERS_ONLY = False
 DOZENS_MOST_SORTED = 7
 BETS_DOZENS_COUNT = 6
-LAST_CONTESTS = [500]
+LAST_CONTESTS = [200]
 
 # Megasena Data Source
 ZIP_URL = 'http://www1.caixa.gov.br/loterias/_arquivos/loterias/D_megase.zip'
@@ -38,12 +38,12 @@ try:
     os.stat(JSON_BASE_DIR)
     shutil.rmtree(JSON_BASE_DIR)
 except:
-    os.mkdir(JSON_BASE_DIR)
+    os.makedirs(JSON_BASE_DIR)
 
 try:
     os.stat(JSON_BASE_DIR)
 except:
-    os.mkdir(JSON_BASE_DIR)
+    os.makedirs(JSON_BASE_DIR)
 
 
 def zip_download():
@@ -107,7 +107,8 @@ def calc_ocurrencies(contests):
     df = df_full[['1ª Dezena', '2ª Dezena', '3ª Dezena',
                   '4ª Dezena', '5ª Dezena', '6ª Dezena', 'Ganhadores_Sena', 'Cidade']]
     df.columns = ['_1', '_2', '_3', '_4', '_5', '_6', 'ganhadores', 'cidade']
-    df = df.drop_duplicates(keep='first', subset=['_1', '_2', '_3', '_4', '_5', '_6'])
+    df = df.drop_duplicates(keep='first', subset=[
+                            '_1', '_2', '_3', '_4', '_5', '_6'])
     js = df.tail(contests).to_dict('records')
 
     results = []
@@ -259,8 +260,35 @@ def results():
                                        for i in range(0, len(line), 2)))
 
 
-# zip_download()
+def check_repeated_results():
+    for contests in LAST_CONTESTS:
+        if WINNERS_ONLY:
+            results_file = JSON_BASE_DIR / \
+                str('results_winners_' + str(contests) + '.json')
+        else:
+            results_file = JSON_BASE_DIR / \
+                str('results_' + str(contests) + '.json')
+
+        quadra = 0
+        quina = 0
+
+        with open(results_file) as json_result_file_read:
+            data = json.load(json_result_file_read, parse_int=int)
+            for result_1 in data:
+                for result_2 in data:
+                    intersections = len(set(result_1) & set(result_2))
+                    if intersections == 5:
+                        quina += 1
+                    if intersections == 4:
+                        quadra += 1
+
+        print('Quadra: ' + str(quadra))
+        print('Quina: ' + str(quina))
+
+
+zip_download()
 table = html_parse()
 ranking_dozens()
 write_bets()
 results()
+check_repeated_results()
